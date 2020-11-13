@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Whatsapp</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/fonts/line-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/material-icons.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body>
+    <main class="whatsapp-main">
+        <div class="whatsapp-menu">
+            <div class="relative d-block d-lg-none"><button class="btn btn-light toggle-menu shadow" type="button"><i
+                        class="material-icons fs-20 m-0">people</i></button></div>
+            <div class="whatsapp-header">
+                <div class="whatsapp-img"><img src="assets/img/user.png"></div>
+                <div class="whatsapp-icon"><a class="icon" href="#"><i
+                            class="material-icons">radio_button_unchecked</i></a><a class="icon" href="#"><i
+                            class="material-icons">chat</i></a>
+                    <div class="dropdown"><a class="btn dropdown-toggle icon" data-toggle="dropdown"
+                            aria-expanded="false" role="button">&nbsp;<i class="material-icons">menu</i></a>
+                        <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation"
+                                href="#">First Item</a><a class="dropdown-item" role="presentation" href="#">Second
+                                Item</a><a class="dropdown-item" role="presentation" href="#">Third Item</a></div>
+                    </div>
+                </div>
+            </div>
+            <div class="whatsapp-search">
+                <div class="input-group">
+                    <div class="input-group-prepend"><span class="input-group-text"><i
+                                class="material-icons">search</i></span></div><input class="form-control" type="text"
+                        placeholder="Ara veya yeni sohbet başlat">
+                </div>
+            </div>
+            <div class="whatsapp-group-user" id="userList">
+                <div class="whatsapp-text-small" align="center" id="NoneUsers"><br>Online Kullanıcı Yok</div>
+            </div>
+        </div>
+        <div class="whatsapp-body">
+            <div class="pt-5 pb-5">
+                <div class="row justify-content-center">
+                    <div class="col col-lg-6 col-md-6 col-sm-12 col-xs-12 col-12">
+                        <div align="center">
+                            <div class="whatsapp-home-img"><img src="assets/img/home.png"></div>
+                            <h2 class="font-weight-light">Telefonunuzu bağlı tutun</h2>
+                            <p class="text-muted fs-14">WhatsApp mesajları senkronize etmek için telefonunuza bağlanır.
+                                Veri kullanımını azaltmak için telefonunuzla Wi-Fi'ya bağlanın.<br></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/all.js"></script>
+</body>
+<script>
+    var MyPeerId = null;
+    var OnlineUsers = new Array();
+    var peer = null;
+    window.onload = function () {
+        $.ajax({
+            url: "http://149.28.205.22:9000/peerjs/peers",
+            type: "GET",
+            data: { test: "test" },
+            success: function (res) {
+                console.log(res);
+                OnlineUsers = res;
+                CheckValidate();
+                document.getElementById("userList").innerHTML = "";
+                if (OnlineUsers.length < 1) {
+                    var user = $('<div class="whatsapp-text-small" align="center" id="NoneUsers"><br>Online Kullanıcı Yok</div>').hide().fadeIn(1000);
+                    $("#userList").append(user);
+                }
+                else {
+                    OnlineUsers.forEach(element => {
+                        addUser(element);
+                    });
+                }
+            }
+        });
+    };
+    // nouser  =  <div class="whatsapp-text-small" align="center" id="NoneUsers"><br>Online Kullanıcı Yok</div>
+    function addUser(username) {
+        var user = $('<div class="whatsapp-user" id = "usr_' + username + '"><div class="whatsapp-img"><img src="assets/img/user.png"></div><div class="whatsapp-user-body"><label class="mb-0">' + username + '</label><p class="whatsapp-text-small"><span class="double-check text-primary"><i class="la la-check"></i><i class="la la-check"></i></span>Lorem Ipsum docolor</p><small class="whatsapp-user-day">Bugün</small></div></div>').hide().fadeIn(1000);
+        $("#userList").append(user);
+    }
+    function CheckValidate() {
+        var person = prompt("Sistemi Kullanabilmek İçin İsmini Girmelisin", "Eren");
+        if (person != null) {
+            if (OnlineUsers.indexOf(person) == -1) {
+                MyPeerId = person;
+                peer = new Peer(MyPeerId, {
+                    host: '149.28.205.22',
+                    port: 9000,
+                    path: '/',
+                    debug: true
+                });
+            }
+            else {
+                alert("Böyle Bir Kullanıcı Zaten Var. Başka Kullanıcı Adı Seç !");
+                window.location.reload();
+            }
+        }
+        else {
+            window.location.reload();
+        }
+    }
+    function ReloadUsers() {
+        $.ajax({
+            url: "http://149.28.205.22:9000/peerjs/peers",
+            type: "GET",
+            data: { test: "test" },
+            success: function (res) {
+                console.log(res);
+                OnlineUsers = res;
+                document.getElementById("userList").innerHTML = "";
+                if (OnlineUsers.length < 1) {
+                    var user = $('<div class="whatsapp-text-small" align="center" id="NoneUsers"><br>Online Kullanıcı Yok</div>').hide().fadeIn(1000);
+                    $("#userList").append(user);
+                }
+                else {
+                    OnlineUsers.forEach(element => {
+                        addUser(element);
+                    });
+                }
+            }
+        });
+    }
+    peer.on('connection', (conn) => {
+        conn.on('data', (data) => {
+            // Will print 'hi!'
+            console.log(data);
+        });
+        conn.on('open', () => {
+            conn.send('hello!');
+        });
+    });
+</script>
+
+</html>
